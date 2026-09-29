@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+_preview.png
+_*.png
+error.log
+*.exe
+!goodjob/bin/flac.exe
+*token*

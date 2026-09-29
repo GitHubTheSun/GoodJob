@@ -1,0 +1,2 @@
+PySide6==6.11.2
+SpeechRecognition==3.17.0
