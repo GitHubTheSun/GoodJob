@@ -4,49 +4,52 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from PySide6.QtCore import (
+from goodjob.qt_compat import (
     QAbstractAnimation,
-    QDate,
-    QEasingCurve,
-    QEvent,
-    QParallelAnimationGroup,
-    QPoint,
-    QPropertyAnimation,
-    Signal,
-    QRect,
-    Qt,
-    QTimer,
-)
-from PySide6.QtGui import (
-    QColor,
-    QCursor,
-    QFont,
-    QFontMetrics,
-    QIcon,
-    QPainter,
-    QPainterPath,
-    QTextLayout,
-    QPalette,
-    QPen,
-    QPixmap,
-)
-from PySide6.QtWidgets import (
     QApplication,
     QCalendarWidget,
+    QColor,
+    QCursor,
+    QDate,
     QDateTimeEdit,
     QDialog,
+    QEasingCurve,
+    QEvent,
+    QFont,
+    QFontMetrics,
     QFrame,
     QHBoxLayout,
+    QIcon,
     QLabel,
     QLineEdit,
     QMenu,
+    QPainter,
+    QPainterPath,
+    QPalette,
+    QParallelAnimationGroup,
+    QPen,
+    QPixmap,
+    QPoint,
+    QPropertyAnimation,
     QPushButton,
+    QRect,
+    QRegion,
     QScrollArea,
+    QSize,
     QSizePolicy,
     QSlider,
     QSystemTrayIcon,
+    QTextLayout,
+    Qt,
+    QTimer,
     QVBoxLayout,
     QWidget,
+    Signal,
+    global_point,
+    local_y,
+    run_exec,
+    to_datetime,
+    tray_clicks,
 )
 
 from goodjob.i18n import tr
@@ -214,13 +217,9 @@ class FitTitle(QLabel):
         self.setStyleSheet(f"color: {self._color}; background: transparent;")
 
     def sizeHint(self):
-        from PySide6.QtCore import QSize
-
         return QSize(48, max(22, self.height()))
 
     def minimumSizeHint(self):
-        from PySide6.QtCore import QSize
-
         return QSize(0, 20)
 
 
@@ -300,9 +299,11 @@ class DockWindow(QWidget):
         self.theme: Theme = theme_by_id(self._theme_id)
 
         self.setWindowTitle("GoodJob")
-        self.setWindowFlags(
-            Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoDropShadowWindowHint
-        )
+        flags = Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool
+        extra = getattr(Qt, "NoDropShadowWindowHint", None)
+        if extra is not None:
+            flags |= extra
+        self.setWindowFlags(flags)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setWindowIcon(make_icon())
         self._build()
@@ -1023,7 +1024,7 @@ class DockWindow(QWidget):
             title = title_edit.text().strip()
             if not title:
                 return
-            picked = when_edit.dateTime().toPython().replace(second=0, microsecond=0)
+            picked = to_datetime(when_edit.dateTime()).replace(second=0, microsecond=0)
             self.store.update_task(task.id, title, picked, chosen["priority"])
             dialog.accept()
 
@@ -1033,7 +1034,7 @@ class DockWindow(QWidget):
         dialog.move(center.x() - dialog.width() // 2, center.y() - dialog.height() // 2)
         self._holds += 1
         try:
-            if dialog.exec():
+            if run_exec(dialog):
                 self.reload()
         finally:
             self._holds = max(0, self._holds - 1)
@@ -1182,7 +1183,7 @@ class DockWindow(QWidget):
 
         def accept_value() -> None:
             accepted["ok"] = True
-            picked = edit.dateTime().toPython()
+            picked = to_datetime(edit.dateTime())
             chosen["value"] = picked.replace(second=0, microsecond=0)
             dialog.accept()
 
@@ -1201,7 +1202,7 @@ class DockWindow(QWidget):
             dialog.move(self.x() + self.width() + 12, self.y() + 80)
         self._holds += 1
         try:
-            dialog.exec()
+            run_exec(dialog)
         finally:
             self._holds = max(0, self._holds - 1)
         return accepted["ok"], chosen["value"]
@@ -1407,8 +1408,7 @@ class DockWindow(QWidget):
         self.clearMask()
 
     def _tray_activated(self, reason) -> None:
-        trigger = QSystemTrayIcon.ActivationReason.Trigger
-        double = QSystemTrayIcon.ActivationReason.DoubleClick
+        trigger, double = tray_clicks()
         if reason in (trigger, double):
             self._open_from_user()
 
@@ -1471,13 +1471,13 @@ class DockWindow(QWidget):
 
     def mousePressEvent(self, event) -> None:
         self.activateWindow()
-        if event.button() == Qt.LeftButton and event.position().y() < 36:
-            self._begin_drag(event.globalPosition().toPoint())
+        if event.button() == Qt.LeftButton and local_y(event) < 36:
+            self._begin_drag(global_point(event))
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event) -> None:
         if self._dragging:
-            self._drag_to(event.globalPosition().toPoint())
+            self._drag_to(global_point(event))
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event) -> None:
@@ -1538,7 +1538,7 @@ class DockWindow(QWidget):
             return False
         if watched in (self._header, self.name_label) and event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
             self.activateWindow()
-            self._begin_drag(event.globalPosition().toPoint())
+            self._begin_drag(global_point(event))
             return True
         if event.type() == QEvent.MouseButtonRelease and self._dragging:
             self._end_drag()
@@ -1547,8 +1547,6 @@ class DockWindow(QWidget):
 
 
 def QRegion_from(polygon):
-    from PySide6.QtGui import QRegion
-
     return QRegion(polygon)
 
 

@@ -31,7 +31,7 @@
 
 ### 如何使用
 
-1. 从 [发布页](https://github.com/GitHubTheSun/GoodJob/releases) 下载 `GoodJob.exe`，双击打开。不需要安装 Python。
+1. Windows 10 或更新的系统：从 [发布页](https://github.com/GitHubTheSun/GoodJob/releases) 下载 `GoodJob.exe`。Windows 7：下载 `GoodJob-Win7.exe`。双击打开，不需要安装 Python。老电脑请用 Win7 那一个，当前的 `GoodJob.exe` 在 Windows 7 上打不开。
 2. 在输入框写下要做的事，选优先级和时间，点 **记下**。
 3. 点卡片两侧的箭头查看明天和后天。
 4. 点任务文字修改，点叉删除，点方框表示做完。
@@ -83,7 +83,7 @@ Settings: style, voice key, and about.
 
 ### How to use
 
-1. Download `GoodJob.exe` from [Releases](https://github.com/GitHubTheSun/GoodJob/releases) and open it. Python is not required.
+1. On Windows 10 or later, download `GoodJob.exe` from [Releases](https://github.com/GitHubTheSun/GoodJob/releases). On Windows 7, download `GoodJob-Win7.exe`. Open the file. Python is not required. The regular `GoodJob.exe` does not run on Windows 7.
 2. Type a note, choose a priority and a time, then click **Add**.
 3. Use the side arrows to see tomorrow and the day after.
 4. Click the text to edit, × to delete, and the box to mark it done.

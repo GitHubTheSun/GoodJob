@@ -5,10 +5,18 @@ from __future__ import annotations
 import sys
 import traceback
 
-from PySide6.QtCore import Qt
-from PySide6.QtNetwork import QLocalServer, QLocalSocket
-from PySide6.QtGui import QColor, QFont, QPalette
-from PySide6.QtWidgets import QApplication, QMessageBox
+from goodjob.qt_compat import (
+    QApplication,
+    QColor,
+    QFont,
+    QFontDatabase,
+    QLocalServer,
+    QLocalSocket,
+    QMessageBox,
+    QPalette,
+    Qt,
+    run_exec,
+)
 
 from goodjob.store import data_dir
 from goodjob.window import DockWindow, make_icon
@@ -18,11 +26,13 @@ SERVER_NAME = "GoodJob.Dock"
 
 def main() -> int:
     _install_excepthook()
-    QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    rounding = getattr(getattr(Qt, "HighDpiScaleFactorRoundingPolicy", None), "PassThrough", None)
+    if rounding is not None and hasattr(QApplication, "setHighDpiScaleFactorRoundingPolicy"):
+        QApplication.setHighDpiScaleFactorRoundingPolicy(rounding)
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     app.setApplicationName("GoodJob")
-    app.setFont(QFont("Microsoft YaHei UI", 10))
+    app.setFont(_ui_font())
     app.setWindowIcon(make_icon())
     _apply_dark(app)
 
@@ -32,7 +42,19 @@ def main() -> int:
     window = DockWindow()
     app.aboutToQuit.connect(window.shutdown)
     window.start()
-    return app.exec()
+    return run_exec(app)
+
+
+def _ui_font() -> QFont:
+    try:
+        families = QFontDatabase.families()
+    except TypeError:
+        families = QFontDatabase().families()
+    if "Microsoft YaHei UI" in families:
+        return QFont("Microsoft YaHei UI", 10)
+    if "Microsoft YaHei" in families:
+        return QFont("Microsoft YaHei", 10)
+    return QFont("SimSun", 10)
 
 
 def _claim_single_instance(app: QApplication) -> bool:

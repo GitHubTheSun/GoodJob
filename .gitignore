@@ -1,8 +1,11 @@
 .venv/
+.python38-32/
 __pycache__/
 *.pyc
 build/
 dist/
+build-win7/
+dist-win7/
 *.spec
 _preview.png
 _*.png
